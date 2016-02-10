@@ -777,7 +777,8 @@ CREATE TABLE `[#DB_PREFIX#]users` (
   KEY `last_active` (`last_active`),
   KEY `integral` (`integral`),
   KEY `url_token` (`url_token`),
-  KEY `verified` (`verified`)
+  KEY `verified` (`verified`),
+  KEY `answer_count` (`answer_count`)
 ) ENGINE=[#DB_ENGINE#] DEFAULT CHARSET=utf8;
 
 CREATE TABLE `[#DB_PREFIX#]users_attrib` (
@@ -1289,7 +1290,7 @@ CREATE TABLE `[#DB_PREFIX#]help_chapter` (
   KEY `title` (`title`),
   KEY `url_token` (`url_token`),
   KEY `sort` (`sort`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='帮助中心';
+) ENGINE=[#DB_ENGINE#] DEFAULT CHARSET=utf8 COMMENT='帮助中心';
 
 INSERT INTO `[#DB_PREFIX#]category`(`title`,`type`) VALUES
 ('默认分类', 'question');

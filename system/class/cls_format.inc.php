@@ -34,7 +34,7 @@ class FORMAT
 
 		if (strstr($str, 'http'))
 		{
-			preg_match_all('/(?<!!!\[\]\(|"|\'|\)|>)(https?:\/\/[-a-zA-Z0-9@:;%_\+.~#?\&\/\/=!]+)(?!"|\'|\)|>)/i', $str, $matches);
+			preg_match_all('/(https?:\/\/[-a-zA-Z0-9@:;%_\+.~#?\&\/\/=!]+)/i', $str, $matches);
 		}
 		else
 		{
@@ -83,6 +83,7 @@ class FORMAT
 
 		return self::parse_links(load_class('Services_BBCode')->parse($text));
 	}
+
 	// 兼容旧版本
 	public static function parse_markdown($text)
 	{

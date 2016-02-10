@@ -54,6 +54,8 @@ class main extends AWS_CONTROLLER
 
 		if (!$topic_info)
 		{
+			header('HTTP/1.1 404 Not Found');
+
 			H::redirect_msg(AWS_APP::lang()->_t('话题不存在'), '/');
 		}
 
@@ -111,14 +113,21 @@ class main extends AWS_CONTROLLER
 		{
 			default:
 				$related_topics_ids = array();
+				
+				$page_keywords[] = $topic_info['topic_title'];
 
 				if ($related_topics = $this->model('topic')->related_topics($topic_info['topic_id']))
 				{
 					foreach ($related_topics AS $key => $val)
 					{
 						$related_topics_ids[$val['topic_id']] = $val['topic_id'];
+						
+						$page_keywords[] = $val['topic_title'];
 					}
 				}
+				
+				TPL::set_meta('keywords', implode(',', $page_keywords));
+				TPL::set_meta('description', cjk_substr(str_replace("\r\n", ' ', strip_tags($topic_info['topic_description'])), 0, 128, 'UTF-8', '...'));
 
 				if ($child_topic_ids = $this->model('topic')->get_child_topic_ids($topic_info['topic_id']))
 				{
@@ -333,7 +342,7 @@ class main extends AWS_CONTROLLER
 		TPL::assign('new_topics', $this->model('topic')->get_topic_list(null, 'topic_id DESC', 10));
 
 		TPL::assign('pagination', AWS_APP::pagination()->initialize(array(
-			'base_url' => get_js_url('/topic/channel-' . $_GET['channel'] . '__topic_id-' . $_GET['topic_id']),
+			'base_url' => get_js_url('/topic/channel-' . $_GET['channel'] . '__topic_id-' . $_GET['topic_id'] . '__day-' . $_GET['day']),
 			'total_rows' => $topics_list_total_rows,
 			'per_page' => 20
 		))->create_links());

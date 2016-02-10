@@ -157,7 +157,10 @@ var AWS =
 			$('.btn-reply').addClass('disabled');
 
 			// 删除草稿绑定事件
-			EDITOR.removeListener('blur', EDITOR_CALLBACK);
+			if (EDITOR != undefined)
+			{
+				EDITOR.removeListener('blur', EDITOR_CALLBACK);
+			}
 		}
 
 		var custom_data = {
@@ -174,11 +177,24 @@ var AWS =
 			},
 			error: function (error)
 			{
+				console.log(error);
 				if ($.trim(error.responseText) != '')
 				{
 					AWS.loading('hide');
 
 					alert(_t('发生错误, 返回的信息:') + ' ' + error.responseText);
+				}
+				else if (error.status == 0)
+				{
+					AWS.loading('hide');
+
+					alert(_t('网络链接异常'));
+				}
+				else if (error.status == 500)
+				{
+					AWS.loading('hide');
+
+					alert(_t('内部服务器错误'));
 				}
 			}
 		});
@@ -530,6 +546,8 @@ var AWS =
 			case 'recommend':
 				var template = Hogan.compile(AW_TEMPLATE.recommend).render();
 			break;
+
+			// modify by wecenter 活动模块
 			case 'projectEventForm':
 				var template = Hogan.compile(AW_TEMPLATE.projectEventForm).render(
 				{
@@ -651,18 +669,21 @@ var AWS =
 							'item_type' : $('#favorite_form input[name="item_type"]').val()
 						}, function (result)
 						{
-							$.each(result, function (i, e)
+							if (result != null)
 							{
-								var index = i;
-
-								$.each($('.aw-favorite-tag-list ul li .title'), function (i, e)
+								$.each(result, function (i, e)
 								{
-									if ($(this).text() == result[index])
+									var index = i;
+
+									$.each($('.aw-favorite-tag-list ul li .title'), function (i, e)
 									{
-										$(this).parents('li').addClass('active');
-									}
+										if ($(this).text() == result[index])
+										{
+											$(this).parents('li').addClass('active');
+										}
+									});
 								});
-							});
+							}
 						}, 'json');
 
 						$(document).on('click', '.aw-favorite-tag-list ul li a', function()
@@ -1433,19 +1454,34 @@ AWS.User =
 		switch (type)
 		{
 			case 'question':
-				var url = '/question/ajax/focus/question_id-';
+				var url = '/question/ajax/focus/';
+
+				var data = {
+					'question_id': data_id
+				};
+
 				break;
 
 			case 'topic':
-				var url = '/topic/ajax/focus_topic/topic_id-';
+				var url = '/topic/ajax/focus_topic/';
+
+				var data = {
+					'topic_id': data_id
+				};
+
 				break;
 
 			case 'user':
-				var url = '/follow/ajax/follow_people/uid-';
-			break;
+				var url = '/follow/ajax/follow_people/';
+
+				var data = {
+					'uid': data_id
+				};
+
+				break;
 		}
 
-		$.get(G_BASE_URL + url + data_id, function (result)
+		$.post(G_BASE_URL + url, data, function (result)
 		{
 			if (result.errno == 1)
 			{
@@ -1476,20 +1512,28 @@ AWS.User =
 		}, 'json');
 	},
 
-	share_out: function(webid, title, url)
+	share_out: function(options)
 	{
-		var url = url || window.location.href;
+		var url = options.url || window.location.href, pic = '';
 
-		if (title)
+		if (options.title)
 		{
-			var title = title + ' - ' + G_SITE_NAME;
+			var title = options.title + ' - ' + G_SITE_NAME;
 		}
 		else
 		{
 			var title = $('title').text();
 		}
 
-		shareURL = 'http://www.jiathis.com/send/?webid=' + webid + '&url=' + url + '&title=' + title + '';
+		shareURL = 'http://www.jiathis.com/send/?webid=' + options.webid + '&url=' + url + '&title=' + title +'';
+
+		if (options.content)
+		{
+			if ($(options.content).find('img').length)
+			{
+				shareURL = shareURL + '&pic=' + $(options.content).find('img').eq(0).attr('src');
+			}
+		}
 
 		window.open(shareURL);
 	},

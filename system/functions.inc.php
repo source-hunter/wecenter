@@ -33,7 +33,14 @@ function base_url()
 	$clean_url = dirname(rtrim($_SERVER['PHP_SELF'], $clean_url));
 	$clean_url = rtrim($_SERVER['HTTP_HOST'] . $clean_url, '/\\');
 
-	$scheme = ($_SERVER['HTTPS'] AND !in_array(strtolower($_SERVER['HTTPS']), array('off', 'no'))) ? 'https' : 'http';
+	if ((isset($_SERVER['HTTPS']) AND !in_array(strtolower($_SERVER['HTTPS']), array('off', 'no', 'false', 'disabled'))) OR $_SERVER['SERVER_PORT'] == 443)
+	{
+		$scheme = 'https';
+	}
+	else
+	{
+		$scheme = 'http';
+	}
 
 	return $scheme . '://' . $clean_url;
 }
@@ -783,7 +790,7 @@ function get_login_cookie_hash($user_name, $password, $salt, $uid, $hash_passwor
 		$password = compile_password($password, $salt);
 	}
 
-	$auth_hash_key = md5(G_COOKIE_HASH_KEY . $_SERVER['HTTP_USER_AGENT'] . $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+	$auth_hash_key = md5(G_COOKIE_HASH_KEY . $_SERVER['HTTP_USER_AGENT']);
 
 	return H::encode_hash(array(
 		'uid' => $uid,
@@ -888,10 +895,12 @@ function get_request_route($positive = true)
  */
 function strip_ubb($str)
 {
-	$str = preg_replace('/\[attach\]([0-9]+)\[\/attach]/', '<i>** ' . AWS_APP::lang()->_t('插入的附件') . ' **</i>', $str);
-	$str = preg_replace('/\[[^\]]+\](http[s]?:\/\/[^\[]*)\[\/[^\]]+\]/', "\$1 ", $str);
+	//$str = preg_replace('/\[attach\]([0-9]+)\[\/attach]/', '<i>** ' . AWS_APP::lang()->_t('插入的附件') . ' **</i>', $str);
+	$str = preg_replace('/\[[^\]]+\](http[s]?:\/\/[^\[]*)\[\/[^\]]+\]/', ' $1 ', $str);
 
-	return preg_replace('/\[[^\]]+\]([^\[]*)\[\/[^\]]+\]/', "\$1", $str);
+	$pattern = '/\[[^\]]+\]([^\[]*)\[\/[^\]]+\]/';
+	$replacement = ' $1 ';
+	return preg_replace($pattern, $replacement, preg_replace($pattern, $replacement, $str));
 }
 
 /**
@@ -1098,9 +1107,16 @@ function curl_get_contents($url, $timeout = 10)
 	curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
 	curl_setopt($curl, CURLOPT_HEADER, FALSE);
 	curl_setopt($curl, CURLOPT_FOLLOWLOCATION, TRUE);
-	curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36');
-
-
+	
+	if (defined('WECENTER_CURL_USERAGENT'))
+	{
+		curl_setopt($curl, CURLOPT_USERAGENT, WECENTER_CURL_USERAGENT);
+	}
+	else
+	{
+		curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12');
+	}
+	
 	if (substr($url, 0, 8) == 'https://')
 	{
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);

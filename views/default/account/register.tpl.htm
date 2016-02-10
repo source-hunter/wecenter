@@ -141,7 +141,10 @@ $(document).ready(function ()
                             }
                             else
                             {
-                                $.get(G_BASE_URL + '/account/ajax/check_username/username' + '-' + encodeURIComponent($(this).val()), function (result)
+                                $.post(G_BASE_URL + '/account/ajax/check_username/', 
+                                    {
+                                        username: $(this).val()
+                                    }, function (result)
                                 {
                                     if (result.errno == -1)
                                     {
@@ -207,7 +210,7 @@ $(document).ready(function ()
         detector: function () {
             this.select(["<?php echo $this->user_info['province']; ?>", "<?php echo $this->user_info['city']; ?>"]);
         },
-        dataUrl: G_STATIC_URL + '/js/areas.js'
+        dataUrl: G_BASE_URL.replace('/?', '') + '/static/js/areas.js'
     });
 });
 </script>

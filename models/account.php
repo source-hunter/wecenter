@@ -38,7 +38,9 @@ class account_class extends AWS_MODEL
      */
     public function check_username($user_name)
     {
-        return $this->fetch_one('users', 'uid', "user_name = '" . $this->quote(trim($user_name)) . "' OR url_token = '" . $this->quote(trim($user_name)) . "'");
+    	$user_name = trim($user_name);
+    	
+        return $this->fetch_one('users', 'uid', "user_name = '" . $this->quote($user_name) . "' OR url_token = '" . $this->quote($user_name) . "'");
     }
 
     /**
@@ -49,7 +51,7 @@ class account_class extends AWS_MODEL
      */
     public function check_username_sensitive_words($user_name)
     {
-        if (H::sensitive_word_exists($user_name, '', true))
+        if (H::sensitive_word_exists($user_name))
         {
             return true;
         }
@@ -63,9 +65,7 @@ class account_class extends AWS_MODEL
         {
             foreach ($censorusers as $name)
             {
-                $name = trim($name);
-
-                if (!$name)
+                if (!$name = trim($name))
                 {
                     continue;
                 }
@@ -233,7 +233,7 @@ class account_class extends AWS_MODEL
      */
     public function get_user_info_by_email($email, $cache_result = true)
     {
-        if (!$email)
+        if (!H::valid_email($email))
         {
             return false;
         }
@@ -478,9 +478,7 @@ class account_class extends AWS_MODEL
      */
     public function get_notification_setting_by_uid($uid)
     {
-        $setting = $this->fetch_row('users_notification_setting', 'uid = ' . intval($uid));
-
-        if (!$setting)
+        if (!$setting = $this->fetch_row('users_notification_setting', 'uid = ' . intval($uid)))
         {
             return array('data' => array());
         }
@@ -821,10 +819,14 @@ class account_class extends AWS_MODEL
             return AWS_APP::lang()->_t('用户名不能为纯数字');
         }
 
+        if (strstr($user_name, '-') OR strstr($user_name, '.') OR strstr($user_name, '/') OR strstr($user_name, '%') OR strstr($user_name, '__'))
+        {
+            return AWS_APP::lang()->_t('用户名不能包含 - / . % 与连续的下划线');
+        }
+
         $length = strlen(convert_encoding($user_name, 'UTF-8', 'GB2312'));
 
         $length_min = intval(get_setting('username_length_min'));
-
         $length_max = intval(get_setting('username_length_max'));
 
         if ($length < $length_min || $length > $length_max)
@@ -1095,10 +1097,10 @@ class account_class extends AWS_MODEL
 
         if ($return_type == 2)
         {
-            return substr($uid, - 2) . '_avatar_' . $size . '.jpg';
+            return substr($uid, -2) . '_avatar_' . $size . '.jpg';
         }
 
-        return $dir1 . '/' . $dir2 . '/' . $dir3 . '/' . substr($uid, - 2) . '_avatar_' . $size . '.jpg';
+        return $dir1 . '/' . $dir2 . '/' . $dir3 . '/' . substr($uid, -2) . '_avatar_' . $size . '.jpg';
     }
 
     /**
@@ -1399,7 +1401,7 @@ class account_class extends AWS_MODEL
             return false;
         }
 
-        if (!$user_info = $this->model('account')->get_user_info_by_uid($uid))
+        if (!$user_info = $this->get_user_info_by_uid($uid))
         {
             return false;
         }
@@ -1416,7 +1418,7 @@ class account_class extends AWS_MODEL
 
         $avatar_location = get_setting('upload_dir') . '/avatar/' . $this->get_avatar($uid, '');
 
-        $avatar_dir = dirname($avatar_location);
+        $avatar_dir = dirname($avatar_location) . '/';
 
         if (!file_exists($avatar_dir))
         {
@@ -1433,14 +1435,14 @@ class account_class extends AWS_MODEL
             AWS_APP::image()->initialize(array(
                 'quality' => 90,
                 'source_image' => $avatar_location,
-                'new_image' => $avatar_dir . $this->model('account')->get_avatar($uid, $key, 2),
+                'new_image' => $avatar_dir . $this->get_avatar($uid, $key, 2),
                 'width' => $val['w'],
                 'height' => $val['h']
             ))->resize();
         }
 
-        $this->model('account')->update('users', array(
-            'avatar_file' => $avatar_file
+        $this->update('users', array(
+            'avatar_file' => $this->get_avatar($uid)
         ), 'uid = ' . intval($uid));
 
         if (!$this->model('integral')->fetch_log($new_user_id, 'UPLOAD_AVATAR'))

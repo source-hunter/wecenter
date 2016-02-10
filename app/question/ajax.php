@@ -184,7 +184,7 @@ class ajax extends AWS_CONTROLLER
 			case 'question':
 				$question_info = $this->model('question')->get_question_info_by_id($_GET['item_id']);
 
-				$question_info['question_content'] = cjk_substr($question_info['question_content'], 0, 100, 'UTF-8', '...');
+				$question_info['question_content'] = trim(cjk_substr($question_info['question_content'], 0, 100, 'UTF-8', '...'), "\r\n\t");
 
 				$url = get_js_url('/question/' . $question_info['question_id'] . '?fromuid=' . $this->user_id);
 
@@ -198,7 +198,7 @@ class ajax extends AWS_CONTROLLER
 
 				$question_info = $this->model('question')->get_question_info_by_id($answer_info['question_id']);
 
-				$answer_info['answer_content'] = trim(cjk_substr($answer_info['answer_content'], 0, 100, 'UTF-8', '...'), '\r\n\t');
+				$answer_info['answer_content'] = trim(cjk_substr($answer_info['answer_content'], 0, 100, 'UTF-8', '...'), "\r\n\t");
 
 				$answer_info['answer_content'] = str_replace(array(
 					"\r",
@@ -219,7 +219,7 @@ class ajax extends AWS_CONTROLLER
 			case 'article':
 				$article_info = $this->model('article')->get_article_info_by_id($_GET['item_id']);
 
-				$article_info['message'] = trim(cjk_substr($article_info['message'], 0, 100, 'UTF-8', '...'), '\r\n\t');
+				$article_info['message'] = trim(cjk_substr($article_info['message'], 0, 100, 'UTF-8', '...'), "\r\n\t");
 
 				$article_info['message'] = str_replace(array(
 					"\r",
@@ -498,18 +498,18 @@ class ajax extends AWS_CONTROLLER
 
 	public function focus_action()
 	{
-		if (!$_GET['question_id'])
+		if (!$_POST['question_id'])
 		{
 			H::ajax_json_output(AWS_APP::RSM(null, '-1', AWS_APP::lang()->_t('问题不存在')));
 		}
 
-		if (! $this->model('question')->get_question_info_by_id($_GET['question_id']))
+		if (! $this->model('question')->get_question_info_by_id($_POST['question_id']))
 		{
 			H::ajax_json_output(AWS_APP::RSM(null, '-1', AWS_APP::lang()->_t('问题不存在')));
 		}
 
 		H::ajax_json_output(AWS_APP::RSM(array(
-			'type' => $this->model('question')->add_focus_question($_GET['question_id'], $this->user_id)
+			'type' => $this->model('question')->add_focus_question($_POST['question_id'], $this->user_id)
 		), 1, null));
 	}
 
@@ -577,7 +577,7 @@ class ajax extends AWS_CONTROLLER
 
 		$this->model('draft')->delete_draft($question_info['question_id'], 'answer', $this->user_id);
 
-		if ($this->publish_approval_valid())
+		if ($this->publish_approval_valid($answer_content))
 		{
 			$this->model('publish')->publish_approval('answer', array(
 				'question_id' => $question_info['question_id'],
@@ -612,7 +612,7 @@ class ajax extends AWS_CONTROLLER
 			if ($answer_info['has_attach'])
 			{
 				$answer_info['attachs'] = $this->model('publish')->get_attach('answer', $answer_id, 'min');
-				
+
 				$answer_info['insert_attach_ids'] = FORMAT::parse_attachs($answer_info['answer_content'], true);
 			}
 

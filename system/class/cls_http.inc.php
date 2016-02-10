@@ -108,15 +108,12 @@ class HTTP
 	{
 		if (preg_match('~&#([0-9]+);~', $filename))
 		{
-			//if (function_exists('iconv'))
-			//{
-				$filename_conv = @iconv('utf-8', 'UTF-8//IGNORE', $filename);
+			$filename_conv = @iconv('utf-8', 'UTF-8//IGNORE', $filename);
 
-				if ($filename_conv !== false)
-				{
-					$filename = $filename_conv;
-				}
-			//}
+			if ($filename_conv !== false)
+			{
+				$filename = $filename_conv;
+			}
 
 			$filename = preg_replace(
 				'~&#([0-9]+);~e',
@@ -377,7 +374,15 @@ class HTTP
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
 		curl_setopt($curl, CURLOPT_HEADER, FALSE);
 		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, TRUE);
-		curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.57 Safari/537.36');
+
+		if (defined('WECENTER_CURL_USERAGENT'))
+		{
+			curl_setopt($curl, CURLOPT_USERAGENT, WECENTER_CURL_USERAGENT);
+		}
+		else
+		{
+			curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12');
+		}
 
 		switch ($method)
 		{
@@ -419,8 +424,6 @@ class HTTP
 
 			curl_setopt($curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
 		}
-
-		curl_setopt($curl, CURLOPT_USERAGENT, 'WeCenter/' . G_VERSION);
 
 		if ($cookie AND is_array($cookie))
 		{
